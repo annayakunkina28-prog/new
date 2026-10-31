@@ -632,240 +632,124 @@ var ns=document.querySelectorAll(".fnode");
 for(var i=0;i<ns.length;i++)ns[i].classList.toggle("on",+ns[i].getAttribute("data-v")===st.el);
 for(var j=0;j<5;j++){var c=document.getElementById("ecard"+j);if(c){c.classList.toggle("on",j===st.el);c.style.boxShadow=j===st.el?("0 0 0 2px "+ELC[j]):""}}
 }
+<!-- ... existing code ... -->
+<script>
 function render(){
 if(window.KIN3D)KIN3D.dispose();
 var t=T[st.l],o="",y=window.scrollY;
 document.documentElement.lang=st.l;document.title=t.title;
 o+='<header><h1>'+t.title+'</h1><p>'+t.sub+'</p></header><nav aria-label="Menu"><div>';
+
+// Кнопки основного меню, включая "Личный кабинет"
 ["soc","kin","ngm"].forEach(function(k,i){o+=B("s",k,t.n[i],st.s===k,"",1)});
+o+=B("s","auth","Личный кабинет",st.s==="auth","",1);
+
 o+='<span class="sp"></span>';
 [["ru","RU"],["uk","УК"],["en","EN"]].forEach(function(x){o+=B("l",x[0],x[1],st.l===x[0],"lg")});
 o+='</div></nav><main>';
-if(st.s==="soc"){var s=t.soc,S=(st.l==="ru"&&window.SOCIONICS_RU)?window.SOCIONICS_RU:null;
-o+='<h2>'+s.h+'</h2><p class="lead">'+s.lead+'</p><p>'+s.p+'</p><div class="quadras">';
-for(var i=0;i<4;i++){o+='<div class="quadra"><h4>'+s.q+': '+s.qn[i]+'</h4>';
-for(var j=0;j<4;j++){var k=i*4+j;o+=B("ty",k,(S?S.emo[k]+" ":"")+s.ty[k].split("|")[0],st.ty===k,"chip")}o+='</div>'}
-var pp=st.ty>=0?s.ty[st.ty].split("|"):0;
-o+='</div><div id="typeinfo" aria-live="polite">'+(pp?pp[0]+' — '+pp[1]+', '+s.q+' '+s.qn[st.ty>>2]:s.pick)+'</div>';
-var X=(S&&window.SOC_EXTRA)?window.SOC_EXTRA:null;
-if(X){o+='<div class="sub" role="tablist">'+B("sn","types","Типы и отношения",st.sn==="types","",1)+B("sn","model","Модель А",st.sn==="model","",1)+B("sn","sym","Символы и аспекты",st.sn==="sym","",1)+'</div>'}
-var tn=st.ty>=0?s.ty[st.ty].split("|")[1]:"";
-if(S&&st.ty>=0&&!(X&&st.sn==="sym")){
-o+='<div class="typecard"><div class="typeicon" aria-hidden="true">'+S.emo[st.ty]+'</div><div><span class="tag">'+s.q+' '+s.qn[st.ty>>2]+'</span><h3>'+tn+'</h3><p>'+S.desc[st.ty]+'</p></div></div>';
+
+if(st.s==="soc"){
+  var s=t.soc,S=(st.l==="ru"&&window.SOCIONICS_RU)?window.SOCIONICS_RU:null;
+  o+='<h2>'+s.h+'</h2><p class="lead">'+s.lead+'</p><p>'+s.p+'</p><div class="quadras">';
+  for(var i=0;i<4;i++){o+='<div class="quadra"><h4>'+s.q+': '+s.qn[i]+'</h4>';
+  for(var j=0;j<4;j++){var k=i*4+j;o+=B("ty",k,(S?S.emo[k]+" ":"")+s.ty[k].split("|")[0],st.ty===k,"chip")}o+='</div>'}
+  var pp=st.ty>=0?s.ty[st.ty].split("|"):0;
+  o+='</div><div id="typeinfo" aria-live="polite">'+(pp?pp[0]+' — '+pp[1]+', '+s.q+' '+s.qn[st.ty>>2]:s.pick)+'</div>';
+  var X=(S&&window.SOC_EXTRA)?window.SOC_EXTRA:null;
+  if(X){o+='<div class="sub" role="tablist">'+B("sn","types","Типы и отношения",st.sn==="types","",1)+B("sn","model","Модель А",st.sn==="model","",1)+B("sn","sym","Символы и аспекты",st.sn==="sym","",1)+'</div>'}
+  var tn=st.ty>=0?s.ty[st.ty].split("|")[1]:"";
+  if(S&&st.ty>=0&&!(X&&st.sn==="sym")){
+    o+='<div class="typecard"><div class="typeicon" aria-hidden="true">'+S.emo[st.ty]+'</div><div><span class="tag">'+s.q+' '+s.qn[st.ty>>2]+'</span><h3>'+tn+'</h3><p>'+S.desc[st.ty]+'</p></div></div>';
+  }
+  if(S&&st.ty>=0&&(!X||st.sn==="types")){
+    o+='<h3>Интертипные отношения</h3><p style="color:var(--muted);font-size:16px">Отношения типа «'+tn+'» с каждым из 16 типов.'+(X?' Нажмите на название отношения, чтобы увидеть, как оно устроено.':'')+'</p>';
+    o+='<div class="tw"><table><tr><th>Тип партнёра</th><th>Ваши отношения</th></tr>';
+    for(var j2=0;j2<16;j2++){var rn=S.rel[st.ty][j2],pn=s.ty[j2].split("|")[1];
+    o+='<tr><td><b>'+pn+'</b></td><td>'+(X?'<button class="relbtn" data-a="rl" data-v="'+j2+'" aria-expanded="'+(st.rl===j2)+'">'+rn+'</button>':rn)+'</td></tr>';
+    if(X&&st.rl===j2)o+='<tr><td colspan="2" class="relinfo">'+relInfo(rn,tn,pn)+'</td></tr>';}
+    o+='</table></div>';
+  }
+}else if(st.s==="kin"){
+  var s=t.kin;
+  o+='<h2>'+s.h+'</h2><p class="lead">'+s.lead+'</p><div class="cols">';
+  s.c.forEach(function(c){o+='<div class="card"><span class="tag">'+c[0]+'</span><h3>'+c[1]+'</h3><p>'+c[2]+'</p></div>'});
+  o+='</div>';
+  o+='<h3>'+s.d3h+'</h3><p>'+s.d3p+'</p>';
+  o+='<div class="v3d"><div class="cwrap" id="kin3d" role="img" aria-label="'+s.d3h+'"></div></div>';
+  o+='<div id="pointCard" class="point-card"></div>';
+}else if(st.s==="ngm"){
+  var s=t.ngm;
+  o+='<h2>'+s.h+'</h2><p class="lead">'+s.lead+'</p><div class="note warn"><b>⚠</b> '+s.warn+'</div><p style="margin-top:16px">'+s.intro+'</p>';
+}else if(st.s==="auth"){
+  // Секция Авторизации и Заметок
+  o+='<h2>Личный кабинет</h2><p class="lead">Зарегистрируйтесь или войдите, чтобы сохранять свои протоколы и наблюдения.</p>';
+  o+='<div class="auth-box">';
+  o+='<div id="userStatus" style="font-weight:600;margin-bottom:14px;color:var(--teal)">Загрузка данных пользователя...</div>';
+  o+='<form id="authForm" onsubmit="event.preventDefault(); window.handleAuth();">';
+  o+='<label style="display:block;margin-bottom:4px;font-weight:600">Email:</label>';
+  o+='<input type="email" id="authEmail" placeholder="your@email.com" style="width:100%;padding:10px;margin-bottom:12px;border-radius:8px;border:1px solid var(--line)" required>';
+  o+='<label style="display:block;margin-bottom:4px;font-weight:600">Пароль:</label>';
+  o+='<input type="password" id="authPass" placeholder="••••••••" style="width:100%;padding:10px;margin-bottom:12px;border-radius:8px;border:1px solid var(--line)" required>';
+  o+='<div style="display:flex;gap:10px;margin-top:10px">';
+  o+='<button type="submit" class="chip" style="background:var(--teal);color:#fff">Регистрация / Вход</button>';
+  o+='<button type="button" class="chip" onclick="if(window.fbApp) window.fbApp.signOut(window.fbApp.auth)">Выйти</button>';
+  o+='</div></form></div>';
+
+  o+='<div class="card" style="margin-top:20px"><h3>Мои сохраненные заметки</h3>';
+  o+='<textarea id="userNotes" style="width:100%;height:120px;padding:10px;border-radius:8px;border:1px solid var(--line);margin:10px 0;" placeholder="Введите ваши заметки о точках или рецептах..."></textarea>';
+  o+='<button class="chip" style="background:var(--ink);color:var(--bg)" onclick="window.saveNotes()">Сохранить заметки</button>';
+  o+='<div id="saveMsg" style="margin-top:8px;color:var(--teal);font-size:14px;"></div></div>';
 }
-if(S&&st.ty>=0&&(!X||st.sn==="types")){
-o+='<h3>Интертипные отношения</h3><p style="color:var(--muted);font-size:16px">Отношения типа «'+tn+'» с каждым из 16 типов.'+(X?' Нажмите на название отношения, чтобы увидеть, как оно устроено.':'')+'</p>';
-o+='<div class="tw"><table><tr><th>Тип партнёра</th><th>Ваши отношения</th></tr>';
-for(var j2=0;j2<16;j2++){var rn=S.rel[st.ty][j2],pn=s.ty[j2].split("|")[1];
-o+='<tr><td><b>'+pn+'</b></td><td>'+(X?'<button class="relbtn" data-a="rl" data-v="'+j2+'" aria-expanded="'+(st.rl===j2)+'">'+rn+'</button>':rn)+'</td></tr>';
-if(X&&st.rl===j2)o+='<tr><td colspan="2" class="relinfo">'+relInfo(rn,tn,pn)+'</td></tr>';}
-o+='</table></div>';
-if(X)o+='<p class="src">Описания отношений обобщены по соционической традиции (понятие ввела А. Аугустинавичюте); научной проверки у них нет.</p>';
-}
-if(X&&st.sn==="model")o+=modelHtml(tn);
-if(X&&st.sn==="sym")o+=symHtml();
-if(X)o+='<p class="src">Источник: А. Аугустинавичюте. «Социон, или основы соционики».</p>';
-o+='<div class="note"><b>'+t.sci+'.</b> '+s.note+'</div>';
-}else if(st.s==="kin"){var s=t.kin;
-o+='<h2>'+s.h+'</h2><p class="lead">'+s.lead+'</p><div class="cols">';
-s.c.forEach(function(c){o+='<div class="card"><span class="tag">'+c[0]+'</span><h3>'+c[1]+'</h3><p>'+c[2]+'</p></div>'});
-o+='</div>';
-o+='<h3>'+s.d3h+'</h3><p>'+s.d3p+'</p>';
-o+='<div class="v3d"><div class="cwrap" id="kin3d" role="img" aria-label="'+s.d3h+'"><div class="poster" id="kin3dposter">'+posterSvg()+'<span id="kin3dmsg" data-fail="'+s.d3fail+'">'+s.d3load+'</span></div><div class="hint">'+s.d3hint+'</div></div><div class="mleg">';
-s.groups.forEach(function(g){o+='<button class="chip" data-a="mg" data-v="'+g[0]+'" aria-pressed="true"><span class="dot" style="background:'+MGC[g[0]]+'"></span>'+g[1]+'</button>'});
-o+='</div></div><p class="src">'+s.d3note+'</p>';
-o+='<h3>'+s.elh+'</h3><p>'+s.elp+'</p>';
-o+='<div class="five"><div>'+fiveSvg(s)+'</div><div class="ecards">';
-s.els.forEach(function(e,i){o+='<div class="card ecard" id="ecard'+i+'"><div class="elhead"><span class="elemoji" aria-hidden="true">'+e[1]+'</span><b style="color:'+ELC[i]+'">'+e[0]+'</b></div><p style="margin-top:8px">'+e[2]+'</p><p class="src" style="margin-top:4px">'+e[3]+'</p></div>'});
-o+='</div></div><p class="src">'+s.cyc+'</p>';
-o+='<div class="note"><b>'+t.sci+'.</b> '+s.note+'</div>';
-}else{var s=t.ngm;
-o+='<h2>'+s.h+'</h2><p class="lead">'+s.lead+'</p><div class="note warn"><b>⚠</b> '+s.warn+'</div><p style="margin-top:16px">'+s.intro+'</p>';
-o+='<div class="sub" role="tablist">'+B("n","laws",t.tl,st.n==="laws","",1)+B("n","dis",t.td,st.n==="dis","",1)+'</div>';
-if(st.n==="laws"){
-o+='<div class="cols">';
-s.laws.forEach(function(l,i){o+='<button class="card" data-a="law" data-v="'+i+'" aria-pressed="'+(st.law===i)+'"><span class="tag">'+(i+1)+'</span><h3>'+l[0]+'</h3><p>'+l[1]+'</p></button>'});
-o+='</div>';
-if(st.law>=0){var l=s.laws[st.law];o+='<div class="note callout"><h3>'+(st.law+1)+'. '+l[0]+'</h3><p>'+l[2]+'</p></div>'}
-else o+='<p style="color:var(--muted);margin-top:12px">'+t.hint+'</p>';
-o+='<div class="note callout"><h3>'+s.lr[0]+'</h3><p>'+s.lr[1]+'</p></div>';
-o+='<h3>'+s.g[0]+'</h3><div class="tw"><table><tr>'+s.g[1].map(function(c){return '<th>'+c+'</th>'}).join("")+'</tr>'+s.g[2].map(function(r){return '<tr><td><b>'+r[0]+'</b></td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>'}).join("")+'</table></div>';
-}else{
-o+='<div style="margin-top:14px">';
-s.d.forEach(function(d,i){o+=B("dis",i,d[0],st.dis===i,"chip")});
-o+='</div>';
-if(st.dis>=0){var d=s.d[st.dis];o+='<div class="card" style="margin-top:12px"><h3>'+d[0]+'</h3><span class="tag">'+t.cl+'</span><p>'+d[1]+'</p><div class="med"><span class="tag">'+t.md+'</span><p>'+d[2]+'</p></div></div>'}
-else o+='<p style="color:var(--muted);margin-top:12px">'+t.pd+'</p>';
-if(st.l==="ru"&&DL.length){
-o+='<h3>Справочник болезней: поиск</h3><p style="color:var(--muted);font-size:16px">Список из '+DL.length+' болезней с описанием «ошибок мышления». Введите название, чтобы найти болезнь.</p>';
-o+='<input id="dq" class="search" type="search" placeholder="Поиск болезни, например «астма»" aria-label="Поиск болезни" autocomplete="off" value="'+esc(st.dq)+'">';
-o+='<div id="dres"></div><div id="ddet"></div>';
-}
-}
-o+='<div class="note"><b>'+t.sci+'.</b> '+s.note+'</div>';
-}
+
 o+='</main><footer>'+t.foot+'</footer>';
 document.getElementById("app").innerHTML=o;
-if(st.l==="ru"&&st.s==="ngm"&&st.n==="dis")renderDq();
-if(st.s==="kin"){updateElSel();if(window.KIN3D)KIN3D.init()}
-window.scrollTo(0,y);
+if(st.s==="kin"){ if(window.KIN3D) KIN3D.init(); }
 }
+
 document.addEventListener("click",function(e){
-var b=e.target.closest("[data-a]");if(!b)return;
-var a=b.dataset.a,v=b.dataset.v;
-if(a==="s"){st.s=v}
-else if(a==="l"){st.l=v;try{localStorage.setItem("lang",v)}catch(x){}}
-else if(a==="n"){st.n=v}
-else if(a==="law"){st.law=(+v===st.law)?-1:+v}
-else if(a==="dis"){st.dis=+v}
-else if(a==="dl"){st.dl=(+v===st.dl)?-1:+v;renderDq()}
-else if(a==="sn"){st.sn=v;st.rl=-1}
-else if(a==="rl"){st.rl=(+v===st.rl)?-1:+v}
-else if(a==="ty"){st.ty=+v;st.rl=-1}
-else if(a==="mg"){var on=b.getAttribute("aria-pressed")==="true";b.setAttribute("aria-pressed",String(!on));if(window.KIN3D)KIN3D.setGroup(v,!on);return}
-else if(a==="el"){st.el=(st.el===+v)?-1:+v;updateElSel();return}
-render();
+  var b=e.target.closest("[data-a]");if(!b)return;
+  var a=b.dataset.a,v=b.dataset.v;
+  if(a==="s"){st.s=v}
+  else if(a==="l"){st.l=v;}
+  render();
 });
-document.addEventListener("keydown",function(e){
-if((e.key==="Enter"||e.key===" ")&&e.target&&e.target.closest&&e.target.closest(".fnode")){e.preventDefault();var g=e.target.closest(".fnode");st.el=(st.el===+g.getAttribute("data-v"))?-1:+g.getAttribute("data-v");updateElSel()}
-});
-document.addEventListener("input",function(e){
-if(e.target&&e.target.id==="dq"){st.dq=e.target.value;st.dl=-1;renderDq()}
-});
-render();
-})();
-</script>
-<script type="module">
-/* 3D-модель человека с меридианами для раздела «Кинезиология».
-   Фигура и пути меридианов строятся параметрически (Three.js, локальный vendor/). */
-window.KIN3D=(function(){
-var ctx=null,seq=0;
-var COL={metal:0x8fa3bf,earth:0xd99b2b,fire:0xd64541,water:0x3f7fbf,wood:0x3f9e4d,du:0x1d6f68};
-function arm(t,dx,dz){return [0.195+0.07*t+dx,1.415-0.48*t,0.005*t+dz]}
-function leg(t,dx,dz){return [0.088+0.015*t+dx,0.92-0.82*t,0.005*t+dz]}
-var MER={
-LU:["metal",[[0.075,1.40,0.128],[0.15,1.375,0.10],arm(0.15,-0.012,0.054),arm(0.45,-0.012,0.056),arm(0.75,-0.012,0.057),arm(0.97,-0.01,0.05),[0.292,0.885,0.028]]],
-LI:["metal",[[0.30,0.885,0.0],arm(0.97,0.02,-0.048),arm(0.7,0.02,-0.055),arm(0.4,0.02,-0.055),arm(0.12,0.015,-0.05),[0.17,1.44,-0.03],[0.10,1.53,0.0],[0.035,1.63,0.098]]],
-ST:["earth",[[0.04,1.665,0.106],[0.085,1.575,0.078],[0.055,1.52,0.05],[0.068,1.32,0.155],[0.062,1.06,0.16],leg(0.12,0.0,0.066),leg(0.45,0.0,0.068),leg(0.8,0.0,0.064),[0.112,0.055,0.075],[0.112,0.02,0.145]]],
-SP:["earth",[[0.052,0.03,0.15],[0.045,0.075,0.035],leg(0.94,-0.055,0.012),leg(0.6,-0.056,0.02),leg(0.28,-0.055,0.025),[0.10,1.02,0.132],[0.108,1.27,0.125]]],
-HT:["fire",[[0.155,1.415,0.05],arm(0.15,-0.05,0.012),arm(0.45,-0.05,0.014),arm(0.75,-0.05,0.015),arm(0.97,-0.045,0.01),[0.263,0.878,-0.012]]],
-SI:["fire",[[0.265,0.878,-0.02],arm(0.95,-0.012,-0.052),arm(0.65,-0.012,-0.054),arm(0.35,-0.012,-0.054),arm(0.1,-0.008,-0.05),[0.155,1.43,-0.10],[0.085,1.53,-0.02],[0.095,1.645,0.045]]],
-BL:["water",[[0.02,1.685,0.105],[0.055,1.745,0.05],[0.06,1.72,-0.078],[0.05,1.45,-0.135],[0.065,1.15,-0.15],[0.085,0.93,-0.105],leg(0.15,0.0,-0.065),leg(0.5,0.0,-0.066),leg(0.82,0.0,-0.062),[0.128,0.06,0.0],[0.138,0.025,0.13]]],
-KI:["water",[[0.10,0.012,0.10],[0.042,0.055,-0.005],leg(0.9,-0.056,-0.018),leg(0.55,-0.057,-0.02),leg(0.25,-0.055,-0.015),[0.045,1.02,0.168],[0.048,1.35,0.16]]],
-PC:["fire",[[0.115,1.33,0.125],arm(0.18,0.004,0.055),arm(0.5,0.004,0.057),arm(0.8,0.004,0.056),arm(0.98,0.004,0.045),[0.282,0.88,0.012]]],
-TB:["fire",[[0.288,0.882,-0.002],arm(0.95,0.005,-0.054),arm(0.6,0.005,-0.056),arm(0.3,0.005,-0.055),[0.20,1.455,-0.015],[0.10,1.53,0.0],[0.105,1.675,0.015],[0.07,1.70,0.075]]],
-GB:["wood",[[0.07,1.675,0.09],[0.11,1.70,0.01],[0.11,1.63,-0.045],[0.155,1.31,-0.005],[0.163,1.06,-0.015],[0.15,0.92,-0.015],leg(0.18,0.064,0.0),leg(0.5,0.065,0.005),leg(0.8,0.062,0.01),[0.128,0.05,0.05],[0.126,0.022,0.135]]],
-LV:["wood",[[0.068,0.055,0.15],[0.05,0.085,0.03],leg(0.9,-0.062,0.0),leg(0.55,-0.062,0.0),leg(0.28,-0.06,0.005),[0.062,0.945,0.10],[0.132,1.14,0.10]]],
-DU:["du",[[0,0.94,-0.15],[0,1.15,-0.163],[0,1.42,-0.125],[0,1.58,-0.09],[0,1.71,-0.075],[0,1.775,0.0],[0,1.72,0.10],[0,1.635,0.118]]],
-REN:["du",[[0,0.95,0.15],[0,1.12,0.172],[0,1.32,0.163],[0,1.46,0.115],[0,1.545,0.075],[0,1.578,0.082]]]
+
+window.handleAuth = function() {
+  var email = document.getElementById("authEmail").value;
+  var pass = document.getElementById("authPass").value;
+  if(!window.fbApp) return;
+  window.fbApp.signInWithEmailAndPassword(window.fbApp.auth, email, pass).catch(function() {
+    window.fbApp.createUserWithEmailAndPassword(window.fbApp.auth, email, pass).catch(function(err){
+      alert("Ошибка входа/регистрации: " + err.message);
+    });
+  });
 };
-function fail(){var m=document.getElementById("kin3dmsg");if(m)m.textContent=m.dataset.fail}
-function dispose(){seq++;window.__KIN3D_READY__=false;if(!ctx)return;var c=ctx;ctx=null;
-c.io.disconnect();c.ro.disconnect();c.controls.dispose();
-c.scene.traverse(function(o){if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose()});
-c.renderer.dispose();if(c.renderer.forceContextLoss)c.renderer.forceContextLoss();
-if(c.canvas&&c.canvas.parentNode)c.canvas.parentNode.removeChild(c.canvas)}
-async function init(){
-var wrap=document.getElementById("kin3d");
-if(!wrap||ctx)return;
-var my=++seq;
-var THREE,OrbitControls;
-try{
-THREE=await import("three");
-OrbitControls=(await import("./vendor/OrbitControls.js")).OrbitControls;
-}catch(e){fail();return}
-if(my!==seq||!document.getElementById("kin3d"))return;
-var renderer;
-try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true})}catch(e){fail();return}
-renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
-var W=wrap.clientWidth||600,H=wrap.clientHeight||460;
-renderer.setSize(W,H,false);
-wrap.appendChild(renderer.domElement);
-var scene=new THREE.Scene();
-var cam=new THREE.PerspectiveCamera(34,W/H,0.1,50);
-cam.position.set(1.78,1.35,3.0);
-var controls=new OrbitControls(cam,renderer.domElement);
-controls.target.set(0,0.92,0);
-controls.enableDamping=true;controls.enablePan=false;
-controls.minDistance=1.3;controls.maxDistance=5;
-var reduced=false;
-try{reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){}
-controls.autoRotate=!reduced;controls.autoRotateSpeed=1.0;
-controls.addEventListener("start",function(){controls.autoRotate=false});
-scene.add(new THREE.HemisphereLight(0xffffff,0x8a8378,1.05));
-var key=new THREE.DirectionalLight(0xffffff,1.6);key.position.set(2.5,3.2,2.0);scene.add(key);
-var fill=new THREE.DirectionalLight(0xdfe8ff,0.7);fill.position.set(-2,1.5,-2.5);scene.add(fill);
-var sh=new THREE.Mesh(new THREE.CircleGeometry(0.5,32),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.12,depthWrite:false}));
-sh.rotation.x=-Math.PI/2;sh.position.y=0.002;sh.scale.set(1,0.7,1);scene.add(sh);
-var bodyMat=new THREE.MeshStandardMaterial({color:0xd8cfc4,roughness:0.65,metalness:0.02,transparent:true,opacity:0.5,depthWrite:false});
-var body=new THREE.Group();
-function mesh(geo,x,y,z){var m=new THREE.Mesh(geo,bodyMat);m.position.set(x,y,z);body.add(m);return m}
-function cap(r,len){return new THREE.CapsuleGeometry(r,len,6,18)}
-mesh(new THREE.SphereGeometry(0.115,28,20),0,1.655,0);
-mesh(new THREE.CylinderGeometry(0.052,0.058,0.09,16),0,1.535,0);
-mesh(cap(0.155,0.26),0,1.175,0);
-mesh(cap(0.135,0.08),0,0.93,0);
-function limb(p1,p2,r){var d=new THREE.Vector3(p2[0]-p1[0],p2[1]-p1[1],p2[2]-p1[2]);var L=d.length();
-var m=new THREE.Mesh(new THREE.CapsuleGeometry(r,L,6,14),bodyMat);
-m.position.set((p1[0]+p2[0])/2,(p1[1]+p2[1])/2,(p1[2]+p2[2])/2);
-m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());body.add(m)}
-[-1,1].forEach(function(s){
-limb([s*0.195,1.415,0],[s*0.265,0.935,0.005],0.05);
-var h=mesh(new THREE.SphereGeometry(0.055,16,12),s*0.28,0.885,0.008);h.scale.set(0.75,1.15,0.55);
-limb([s*0.088,0.92,0],[s*0.103,0.10,0.005],0.062);
-var f=mesh(new THREE.SphereGeometry(0.06,16,12),s*0.105,0.035,0.07);f.scale.set(0.85,0.45,1.6);
-});
-scene.add(body);
-var groups={};
-Object.keys(COL).forEach(function(k){groups[k]=new THREE.Group();scene.add(groups[k])});
-Object.keys(MER).forEach(function(name){
-var gk=MER[name][0],pts=MER[name][1];
-[1,-1].forEach(function(sgn){
-if(sgn<0&&(name==="DU"||name==="REN"))return;
-var v=pts.map(function(p){return new THREE.Vector3(sgn*p[0],p[1],p[2])});
-var curve=new THREE.CatmullRomCurve3(v,false,"catmullrom",0.15);
-var geo=new THREE.TubeGeometry(curve,Math.max(32,v.length*8),0.0075,6,false);
-groups[gk].add(new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:COL[gk]})));
-});
-});
-var raf=0;
-function frame(){raf=requestAnimationFrame(frame);controls.update();renderer.render(scene,cam)}
-var io=new IntersectionObserver(function(es){es.forEach(function(en){
-if(en.isIntersecting){if(!raf)frame()}else{cancelAnimationFrame(raf);raf=0}})},{threshold:0.05});
-io.observe(wrap);
-var ro=new ResizeObserver(function(){var w=wrap.clientWidth,h=wrap.clientHeight;if(!w||!h)return;
-renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()});
-ro.observe(wrap);
-<!-- ... existing code ... -->
-var poster=document.getElementById("kin3dposter");if(poster)poster.remove();
-ctx={renderer:renderer,controls:controls,io:io,ro:ro,scene:scene,canvas:renderer.domElement,groups:groups};
-renderer.render(scene,cam);
-window.__KIN3D_READY__=true;
-}
-function setGroup(k,on){if(ctx&&ctx.groups[k])ctx.groups[k].visible=on}
-if(document.getElementById("kin3d"))init();
-setTimeout(function(){if(!window.__KIN3D_READY__&&document.getElementById("kin3d"))fail()},12000);
-return {init:init,dispose:dispose,setGroup:setGroup};
+
+window.saveNotes = function() {
+  var notes = document.getElementById("userNotes").value;
+  var msg = document.getElementById("saveMsg");
+  if(window.currentUser && window.fbApp) {
+    window.fbApp.setDoc(window.fbApp.doc(window.fbApp.db, "users", window.currentUser.uid), { notes: notes })
+      .then(function(){ if(msg) msg.textContent = "Заметки успешно сохранены в облаке!"; });
+  } else {
+    if(msg) msg.textContent = "Сохранено локально.";
+  }
+};
+
+render();
 })();
 </script>
 
-<!-- Загрузка Three.js и OrbitControls через стандартизированный CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
 <script>
-// Расширенная инициализация 3D манекена акупунктуры без иероглифов
 (function() {
   var ACUPOINTS = [
-    { code: "LU-11", name: "Шао-шан", pos: [0.28, 0.88, 0.02], desc: "Меридиан лёгких. Снимает боль в горле, кашель и лихорадочные состояния." },
-    { code: "LI-4", name: "Хэ-гу", pos: [0.27, 0.89, 0.04], desc: "Меридиан толстого кишечника. Универсальная точка от головной и мышечной боли." },
-    { code: "ST-36", name: "Цзу-сань-ли", pos: [0.11, 0.45, 0.07], desc: "Точка «долголетия» (желудок). Укрепляет иммунитет, пищеварение и силы." },
-    { code: "SP-6", name: "Сань-инь-цзяо", pos: [0.08, 0.18, 0.02], desc: "Пересечение 3 иньских каналов. Нормализует гормональный фон." },
-    { code: "HT-7", name: "Шэнь-мэнь", pos: [0.25, 0.88, -0.01], desc: "Меридиан сердца. Успокаивает нервную систему, устраняет тревогу." },
-    { code: "BL-60", name: "Кунь-лунь", pos: [0.13, 0.06, -0.02], desc: "Меридиан мочевого пузыря. Снимает боль в пояснице и затылке." },
-    { code: "KI-3", name: "Тай-си", pos: [0.08, 0.06, -0.01], desc: "Меридиан почек. Тонизирует жизненную энергию Ци." },
-    { code: "GB-20", name: "Фэн-чи", pos: [0.06, 1.63, -0.06], desc: "Меридиан желчного пузыря. Снимает спазм сосудов головы." },
-    { code: "GV-20", name: "Бай-хуэй", pos: [0, 1.76, 0.0], desc: "Управляющий сосуд. Главная точка гармонизации ян-каналов." }
+    { code: "LU-11", name: "Шао-шан", pos: [0.28, 0.88, 0.02], desc: "Меридиан лёгких. Снимает боль в горле, кашель." },
+    { code: "LI-4", name: "Хэ-гу", pos: [0.27, 0.89, 0.04], desc: "Меридиан толстого кишечника. От головной и мышечной боли." },
+    { code: "ST-36", name: "Цзу-сань-ли", pos: [0.11, 0.45, 0.07], desc: "Точка «долголетия». Укрепляет иммунитет и силы." },
+    { code: "GV-20", name: "Бай-хуэй", pos: [0, 1.76, 0.0], desc: "Главная точка гармонизации ян-каналов." }
   ];
 
   window.KIN3D = {
@@ -891,43 +775,24 @@ return {init:init,dispose:dispose,setGroup:setGroup};
       controls.enableDamping = true;
 
       scene.add(new THREE.HemisphereLight(0xffffff, 0x777065, 1.2));
-      var dirLight = new THREE.DirectionalLight(0xffffff, 1.4);
-      dirLight.position.set(2.5, 3, 2);
-      scene.add(dirLight);
 
-      // Анатомический фарфоровый манекен
       var body = new THREE.Group();
       var mat = new THREE.MeshStandardMaterial({ color: 0xf0eae1, roughness: 0.35 });
-      
       var head = new THREE.Mesh(new THREE.SphereGeometry(0.11, 24, 20), mat);
-      head.position.set(0, 1.65, 0); head.scale.set(0.9, 1.1, 0.95); body.add(head);
-
+      head.position.set(0, 1.65, 0); body.add(head);
       var torso = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.13, 0.5, 20), mat);
       torso.position.set(0, 1.15, 0); body.add(torso);
-
-      [-1, 1].forEach(function(s) {
-        var arm = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.035, 0.5, 16), mat);
-        arm.position.set(s * 0.2, 1.15, 0); arm.rotation.z = -s * 0.15; body.add(arm);
-
-        var leg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.045, 0.8, 16), mat);
-        leg.position.set(s * 0.09, 0.45, 0); body.add(leg);
-      });
       scene.add(body);
 
-      // Отрисовка красных акупунктурных точек ВОЗ
       var pointMeshes = [];
       ACUPOINTS.forEach(function(pt) {
-        var mesh = new THREE.Mesh(
-          new THREE.SphereGeometry(0.02, 16, 16),
-          new THREE.MeshBasicMaterial({ color: 0xd63031 })
-        );
+        var mesh = new THREE.Mesh(new THREE.SphereGeometry(0.02, 16, 16), new THREE.MeshBasicMaterial({ color: 0xd63031 }));
         mesh.position.set(pt.pos[0], pt.pos[1], pt.pos[2]);
         mesh.userData = pt;
         scene.add(mesh);
         pointMeshes.push(mesh);
       });
 
-      // Клики по точкам
       var raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2();
       renderer.domElement.addEventListener("click", function(e) {
         var rect = renderer.domElement.getBoundingClientRect();
@@ -938,14 +803,10 @@ return {init:init,dispose:dispose,setGroup:setGroup};
         if (intersects.length > 0) {
           var pt = intersects[0].object.userData;
           var card = document.getElementById("pointCard");
-          if (!card) {
-            card = document.createElement("div");
-            card.id = "pointCard";
-            card.className = "point-card";
-            wrap.parentNode.appendChild(card);
+          if (card) {
+            card.innerHTML = '<h4><span style="background:var(--teal);color:#fff;padding:2px 6px;border-radius:4px;margin-right:8px;">' + pt.code + '</span>' + pt.name + '</h4><p>' + pt.desc + '</p>';
+            card.style.display = "block";
           }
-          card.innerHTML = '<h4 style="margin:0;color:var(--teal);"><span class="pcode" style="background:var(--teal);color:#fff;padding:2px 6px;border-radius:4px;margin-right:8px;">' + pt.code + '</span>' + pt.name + '</h4><p style="margin:6px 0 0;font-size:14px;">' + pt.desc + '</p>';
-          card.style.display = "block";
         }
       });
 
@@ -956,17 +817,9 @@ return {init:init,dispose:dispose,setGroup:setGroup};
       }
       animate();
     },
-    dispose: function() {},
-    setGroup: function() {}
+    dispose: function() {}
   };
 })();
-
-window.addEventListener("DOMContentLoaded", function() {
-  setTimeout(function() {
-    if (window.KIN3D) window.KIN3D.init();
-  }, 300);
-});
 </script>
 </body>
 </html>
-
