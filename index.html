@@ -549,4 +549,303 @@ var st={l:"ru",s:"soc",n:"laws",law:-1,dis:-1,ty:-1,dq:"",dl:-1,sn:"types",rl:-1
 try{var sv=localStorage.getItem("lang");if(sv&&T[sv]){st.l=sv}else{var nl=(navigator.language||"").slice(0,2);st.l=nl==="uk"?"uk":nl==="en"?"en":"ru"}}catch(e){}
 var hs=(location.hash||"").slice(1);
 if(hs==="kinesiology")st.s="kin";else if(hs==="ngm")st.s="ngm";
-function B(a,v,t,on,cls,role){return '<button class="'+cls+'" data-a="'+a+'" data-v="'+v+'"'+(role?' role="tab" aria-selected="'+on+'"':' aria-pressed="'+on+'"')+'>'+t+'</
+function B(a,v,t,on,cls,role){return '<button class="'+cls+'" data-a="'+a+'" data-v="'+v+'"'+(role?' role="tab" aria-selected="'+on+'"':' aria-pressed="'+on+'"')+'>'+t+'</button>'}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function dqFind(q){
+var a=[],b=[];
+if(!q)return DL.map(function(d,i){return i});
+DL.forEach(function(d,i){
+var n=d[0].toLowerCase(),k=d[1].toLowerCase();
+if(n.indexOf(q)===0)a.push(i);
+else if(n.indexOf(q)>0||k.indexOf(q)===0)b.push(i);
+else if(d[2]&&d[2].toLowerCase().indexOf(q)>=0)b.push(i);
+});
+return a.concat(b);
+}
+function renderDq(){
+var box=document.getElementById("dres"),det=document.getElementById("ddet");
+if(!box||!det)return;
+var m=dqFind(st.dq.trim().toLowerCase()),lim=60,o="";
+if(!m.length){st.dl=-1;o='<p style="color:var(--muted);margin-top:10px">Ничего не найдено.</p>'}
+else{
+o+='<div class="cols" style="margin-top:10px">';
+m.slice(0,lim).forEach(function(i){o+=B("dl",i,DL[i][0],st.dl===i,"chip")});
+o+='</div><p style="color:var(--muted);font-size:15px;margin-top:6px">'+(m.length>lim?"Показаны первые "+lim+" из "+m.length+" — уточните запрос.":"Найдено: "+m.length)+'</p>';
+}
+box.innerHTML=o;
+if(st.dl<0||m.indexOf(st.dl)<0){det.innerHTML="";return}
+var d=DL[st.dl],x="";
+if(d[2])x=d[2].split("\n").map(function(p){return (p==="Ошибки:"||p==="Новая мысль:")?"<p><b>"+esc(p)+"</b></p>":"<p>"+esc(p)+"</p>"}).join("");
+else x='<p style="color:var(--muted)">Описания для этой болезни в источнике нет.</p>';
+det.innerHTML='<div class="card" style="margin-top:12px"><h3>'+esc(d[0])+'</h3><span class="tag">'+esc(d[1])+'</span>'+x+'</div>';
+}
+function relInfo(rn,tn,pn){var X=window.SOC_EXTRA,m=rn.split(", Вы — "),b=m[0],r=m[1],d=X.rel[b];
+if(!d)return '<p>Описание не найдено.</p>';
+var h='<p><b>«'+tn+'» и «'+pn+'»: '+b.charAt(0).toLowerCase()+b.slice(1)+'</b></p><p>'+d[0]+'</p>';
+if(r&&d[1]&&d[1][r])h+='<p><b>Вы — '+r+'.</b> '+d[1][r]+'</p>';
+return h}
+function funcs(i){var X=window.SOC_EXTRA,p=X.ab[i].split(" "),a=p[0],b=p[1],O=X.opp,F=X.flip;return [a,b,F[O[a]],F[O[b]],O[a],O[b],F[a],F[b]]}
+function modelHtml(tn){var X=window.SOC_EXTRA,M=X.model,o='<div class="card" style="margin-top:14px"><h3>Модель А</h3><p>'+M.intro+'</p><p class="src">'+M.src+'</p></div>';
+if(st.ty<0)return o+'<p style="color:var(--muted);margin-top:12px">Выберите тип выше, чтобы увидеть его Модель А.</p>';
+var f=funcs(st.ty);
+o+='<h3>Модель А: «'+tn+'»</h3><div class="mgrid">';
+for(var b=0;b<4;b++){o+='<div class="mblock"><h4>'+M.blocks[b][0]+'</h4><span class="tag">'+M.blocks[b][1]+'</span>';
+for(var k=0;k<2;k++){var pos=b*2+k,e=X.el[f[pos]];
+o+='<div class="mfn"><div class="msym" aria-hidden="true">'+e[0]+'</div><div><b>'+(pos+1)+'. '+M.pos[pos][0]+'</b><br><span class="mel">'+e[1]+' ('+f[pos]+')</span><p>'+M.pos[pos][1]+'</p></div></div>'}
+o+='</div>'}
+return o+'</div><p style="margin-top:14px">'+M.dual+'</p>'}
+function cyc(a){var o='<div class="cycle">';a.forEach(function(c,i){o+='<div class="cyc"><div class="gl">'+c[0]+'</div><b>'+c[1]+'</b><div class="mel">'+c[3]+'</div><p>'+c[2]+'</p></div>'+(i<a.length-1?'<div class="arr" aria-hidden="true">→</div>':'<div class="arr" aria-hidden="true">↺</div>')});return o+'</div>'}
+function symHtml(){var Y=window.SOC_EXTRA.sym,o='<div class="card" style="margin-top:14px"><h3>'+Y.h+'</h3>';
+Y.intro.forEach(function(p){o+='<p>'+p+'</p>'});o+='</div>';
+o+='<h3>Восемь аспектов и их значки</h3><div class="tw"><table><tr><th>Знак</th><th>Название</th><th>Обозн.</th><th>Что воспринимается</th></tr>';
+Y.rows.forEach(function(r){o+='<tr><td class="gl">'+r[0]+'</td><td><b>'+r[1]+'</b></td><td>'+r[2]+'</td><td>'+r[3]+'</td></tr>'});
+o+='</table></div><p class="src">'+Y.note+'</p>';
+o+='<h3>'+Y.tH+'</h3><p>'+Y.tP+'</p>'+cyc(Y.tel);
+o+='<h3>'+Y.pH+'</h3><p>'+Y.pP+'</p>'+cyc(Y.pol);
+o+='<div class="card" style="margin-top:14px"><h3>'+Y.setH+'</h3><p>'+Y.setP+'</p></div>';
+return o+'<p class="src">'+Y.src+'</p>'}
+var ELC=["#3f9e4d","#d64541","#d99b2b","#8fa3bf","#3f7fbf"];
+var MGC={wood:ELC[0],fire:ELC[1],earth:ELC[2],metal:ELC[3],water:ELC[4],du:"#1d6f68"};
+function posterSvg(){return '<svg width="90" height="180" viewBox="0 0 90 180" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" opacity=".45"><circle cx="45" cy="18" r="12"/><path d="M45 32v66M22 44l23 8 23-8M35 150l10-52 10 52"/><path d="M35 150l-3 22M55 150l3 22"/></g></svg>'}
+function fiveSvg(s){
+var C=260,R=160,nr=32,ang=[198,-90,-18,54,126];
+function pt(a,r){var d=a*Math.PI/180;return [C+r*Math.cos(d),C+r*Math.sin(d)]}
+var pos=[],i;for(i=0;i<5;i++)pos.push(pt(ang[i],R));
+var defs="";
+for(i=0;i<5;i++)defs+='<marker id="fam'+i+'" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto"><path d="M0,0L10,5L0,10z" fill="'+ELC[i]+'"/></marker>';
+var o='<svg viewBox="0 0 520 520" role="img" aria-label="'+s.elh+'"><defs>'+defs+'</defs>';
+var gen=[[1,2],[2,3],[3,4],[4,0],[0,1]],dg=14;
+gen.forEach(function(g){var a1=ang[g[0]]+dg,a2=ang[g[1]]-dg,p1=pt(a1,R),p2=pt(a2,R);
+o+='<path d="M'+p1[0].toFixed(1)+' '+p1[1].toFixed(1)+' A'+R+' '+R+' 0 0 1 '+p2[0].toFixed(1)+' '+p2[1].toFixed(1)+'" fill="none" stroke="'+ELC[g[0]]+'" stroke-width="3.5" stroke-opacity=".9" marker-end="url(#fam'+g[0]+')"/>'});
+var ctl=[[0,2],[2,4],[4,1],[1,3],[3,0]];
+ctl.forEach(function(g){var p1=pos[g[0]],p2=pos[g[1]],dx=p2[0]-p1[0],dy=p2[1]-p1[1],L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L;
+var x1=p1[0]+ux*(nr+5),y1=p1[1]+uy*(nr+5),x2=p2[0]-ux*(nr+11),y2=p2[1]-uy*(nr+11);
+o+='<line x1="'+x1.toFixed(1)+'" y1="'+y1.toFixed(1)+'" x2="'+x2.toFixed(1)+'" y2="'+y2.toFixed(1)+'" stroke="'+ELC[g[0]]+'" stroke-width="2.2" stroke-dasharray="6 6" stroke-opacity=".55" marker-end="url(#fam'+g[0]+')"/>'});
+o+='<circle cx="'+C+'" cy="'+C+'" r="46" fill="var(--surface-2)" stroke="var(--line)"/>';
+o+='<text x="'+C+'" y="'+(C-1)+'" text-anchor="middle" font-size="30" font-weight="800" font-family="Manrope,sans-serif" fill="var(--ink)">5</text>';
+o+='<text x="'+C+'" y="'+(C+21)+'" text-anchor="middle" font-size="13.5" font-family="Manrope,sans-serif" fill="var(--muted)">'+s.elc+'</text>';
+[1,2,3,4,0].forEach(function(i){var p=pos[i],e=s.els[i];
+o+='<g class="fnode" data-a="el" data-v="'+i+'" tabindex="0" role="button" transform="translate('+p[0].toFixed(1)+' '+p[1].toFixed(1)+')"><title>'+e[0]+'</title><circle r="'+nr+'" fill="var(--surface)" stroke="'+ELC[i]+'" stroke-width="3"/><text y="9" text-anchor="middle" font-size="26">'+e[1]+'</text><text y="'+(nr+26)+'" text-anchor="middle" font-size="15" font-weight="700" font-family="Manrope,sans-serif" fill="var(--ink)">'+e[0]+'</text></g>'});
+return o+'</svg>'}
+function updateElSel(){
+var ns=document.querySelectorAll(".fnode");
+for(var i=0;i<ns.length;i++)ns[i].classList.toggle("on",+ns[i].getAttribute("data-v")===st.el);
+for(var j=0;j<5;j++){var c=document.getElementById("ecard"+j);if(c){c.classList.toggle("on",j===st.el);c.style.boxShadow=j===st.el?("0 0 0 2px "+ELC[j]):""}}
+}
+function render(){
+if(window.KIN3D)KIN3D.dispose();
+var t=T[st.l],o="",y=window.scrollY;
+document.documentElement.lang=st.l;document.title=t.title;
+o+='<header><h1>'+t.title+'</h1><p>'+t.sub+'</p></header><nav aria-label="Menu"><div>';
+["soc","kin","ngm"].forEach(function(k,i){o+=B("s",k,t.n[i],st.s===k,"",1)});
+o+='<span class="sp"></span>';
+[["ru","RU"],["uk","УК"],["en","EN"]].forEach(function(x){o+=B("l",x[0],x[1],st.l===x[0],"lg")});
+o+='</div></nav><main>';
+if(st.s==="soc"){var s=t.soc,S=(st.l==="ru"&&window.SOCIONICS_RU)?window.SOCIONICS_RU:null;
+o+='<h2>'+s.h+'</h2><p class="lead">'+s.lead+'</p><p>'+s.p+'</p><div class="quadras">';
+for(var i=0;i<4;i++){o+='<div class="quadra"><h4>'+s.q+': '+s.qn[i]+'</h4>';
+for(var j=0;j<4;j++){var k=i*4+j;o+=B("ty",k,(S?S.emo[k]+" ":"")+s.ty[k].split("|")[0],st.ty===k,"chip")}o+='</div>'}
+var pp=st.ty>=0?s.ty[st.ty].split("|"):0;
+o+='</div><div id="typeinfo" aria-live="polite">'+(pp?pp[0]+' — '+pp[1]+', '+s.q+' '+s.qn[st.ty>>2]:s.pick)+'</div>';
+var X=(S&&window.SOC_EXTRA)?window.SOC_EXTRA:null;
+if(X){o+='<div class="sub" role="tablist">'+B("sn","types","Типы и отношения",st.sn==="types","",1)+B("sn","model","Модель А",st.sn==="model","",1)+B("sn","sym","Символы и аспекты",st.sn==="sym","",1)+'</div>'}
+var tn=st.ty>=0?s.ty[st.ty].split("|")[1]:"";
+if(S&&st.ty>=0&&!(X&&st.sn==="sym")){
+o+='<div class="typecard"><div class="typeicon" aria-hidden="true">'+S.emo[st.ty]+'</div><div><span class="tag">'+s.q+' '+s.qn[st.ty>>2]+'</span><h3>'+tn+'</h3><p>'+S.desc[st.ty]+'</p></div></div>';
+}
+if(S&&st.ty>=0&&(!X||st.sn==="types")){
+o+='<h3>Интертипные отношения</h3><p style="color:var(--muted);font-size:16px">Отношения типа «'+tn+'» с каждым из 16 типов.'+(X?' Нажмите на название отношения, чтобы увидеть, как оно устроено.':'')+'</p>';
+o+='<div class="tw"><table><tr><th>Тип партнёра</th><th>Ваши отношения</th></tr>';
+for(var j2=0;j2<16;j2++){var rn=S.rel[st.ty][j2],pn=s.ty[j2].split("|")[1];
+o+='<tr><td><b>'+pn+'</b></td><td>'+(X?'<button class="relbtn" data-a="rl" data-v="'+j2+'" aria-expanded="'+(st.rl===j2)+'">'+rn+'</button>':rn)+'</td></tr>';
+if(X&&st.rl===j2)o+='<tr><td colspan="2" class="relinfo">'+relInfo(rn,tn,pn)+'</td></tr>';}
+o+='</table></div>';
+if(X)o+='<p class="src">Описания отношений обобщены по соционической традиции (понятие ввела А. Аугустинавичюте); научной проверки у них нет.</p>';
+}
+if(X&&st.sn==="model")o+=modelHtml(tn);
+if(X&&st.sn==="sym")o+=symHtml();
+if(X)o+='<p class="src">Источник: А. Аугустинавичюте. «Социон, или основы соционики».</p>';
+o+='<div class="note"><b>'+t.sci+'.</b> '+s.note+'</div>';
+}else if(st.s==="kin"){var s=t.kin;
+o+='<h2>'+s.h+'</h2><p class="lead">'+s.lead+'</p><div class="cols">';
+s.c.forEach(function(c){o+='<div class="card"><span class="tag">'+c[0]+'</span><h3>'+c[1]+'</h3><p>'+c[2]+'</p></div>'});
+o+='</div>';
+o+='<h3>'+s.d3h+'</h3><p>'+s.d3p+'</p>';
+o+='<div class="v3d"><div class="cwrap" id="kin3d" role="img" aria-label="'+s.d3h+'"><div class="poster" id="kin3dposter">'+posterSvg()+'<span id="kin3dmsg" data-fail="'+s.d3fail+'">'+s.d3load+'</span></div><div class="hint">'+s.d3hint+'</div></div><div class="mleg">';
+s.groups.forEach(function(g){o+='<button class="chip" data-a="mg" data-v="'+g[0]+'" aria-pressed="true"><span class="dot" style="background:'+MGC[g[0]]+'"></span>'+g[1]+'</button>'});
+o+='</div></div><p class="src">'+s.d3note+'</p>';
+o+='<h3>'+s.elh+'</h3><p>'+s.elp+'</p>';
+o+='<div class="five"><div>'+fiveSvg(s)+'</div><div class="ecards">';
+s.els.forEach(function(e,i){o+='<div class="card ecard" id="ecard'+i+'"><div class="elhead"><span class="elemoji" aria-hidden="true">'+e[1]+'</span><b style="color:'+ELC[i]+'">'+e[0]+'</b></div><p style="margin-top:8px">'+e[2]+'</p><p class="src" style="margin-top:4px">'+e[3]+'</p></div>'});
+o+='</div></div><p class="src">'+s.cyc+'</p>';
+o+='<div class="note"><b>'+t.sci+'.</b> '+s.note+'</div>';
+}else{var s=t.ngm;
+o+='<h2>'+s.h+'</h2><p class="lead">'+s.lead+'</p><div class="note warn"><b>⚠</b> '+s.warn+'</div><p style="margin-top:16px">'+s.intro+'</p>';
+o+='<div class="sub" role="tablist">'+B("n","laws",t.tl,st.n==="laws","",1)+B("n","dis",t.td,st.n==="dis","",1)+'</div>';
+if(st.n==="laws"){
+o+='<div class="cols">';
+s.laws.forEach(function(l,i){o+='<button class="card" data-a="law" data-v="'+i+'" aria-pressed="'+(st.law===i)+'"><span class="tag">'+(i+1)+'</span><h3>'+l[0]+'</h3><p>'+l[1]+'</p></button>'});
+o+='</div>';
+if(st.law>=0){var l=s.laws[st.law];o+='<div class="note callout"><h3>'+(st.law+1)+'. '+l[0]+'</h3><p>'+l[2]+'</p></div>'}
+else o+='<p style="color:var(--muted);margin-top:12px">'+t.hint+'</p>';
+o+='<div class="note callout"><h3>'+s.lr[0]+'</h3><p>'+s.lr[1]+'</p></div>';
+o+='<h3>'+s.g[0]+'</h3><div class="tw"><table><tr>'+s.g[1].map(function(c){return '<th>'+c+'</th>'}).join("")+'</tr>'+s.g[2].map(function(r){return '<tr><td><b>'+r[0]+'</b></td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>'}).join("")+'</table></div>';
+}else{
+o+='<div style="margin-top:14px">';
+s.d.forEach(function(d,i){o+=B("dis",i,d[0],st.dis===i,"chip")});
+o+='</div>';
+if(st.dis>=0){var d=s.d[st.dis];o+='<div class="card" style="margin-top:12px"><h3>'+d[0]+'</h3><span class="tag">'+t.cl+'</span><p>'+d[1]+'</p><div class="med"><span class="tag">'+t.md+'</span><p>'+d[2]+'</p></div></div>'}
+else o+='<p style="color:var(--muted);margin-top:12px">'+t.pd+'</p>';
+if(st.l==="ru"&&DL.length){
+o+='<h3>Справочник болезней: поиск</h3><p style="color:var(--muted);font-size:16px">Список из '+DL.length+' болезней с описанием «ошибок мышления». Введите название, чтобы найти болезнь.</p>';
+o+='<input id="dq" class="search" type="search" placeholder="Поиск болезни, например «астма»" aria-label="Поиск болезни" autocomplete="off" value="'+esc(st.dq)+'">';
+o+='<div id="dres"></div><div id="ddet"></div>';
+}
+}
+o+='<div class="note"><b>'+t.sci+'.</b> '+s.note+'</div>';
+}
+o+='</main><footer>'+t.foot+'</footer>';
+document.getElementById("app").innerHTML=o;
+if(st.l==="ru"&&st.s==="ngm"&&st.n==="dis")renderDq();
+if(st.s==="kin"){updateElSel();if(window.KIN3D)KIN3D.init()}
+window.scrollTo(0,y);
+}
+document.addEventListener("click",function(e){
+var b=e.target.closest("[data-a]");if(!b)return;
+var a=b.dataset.a,v=b.dataset.v;
+if(a==="s"){st.s=v}
+else if(a==="l"){st.l=v;try{localStorage.setItem("lang",v)}catch(x){}}
+else if(a==="n"){st.n=v}
+else if(a==="law"){st.law=(+v===st.law)?-1:+v}
+else if(a==="dis"){st.dis=+v}
+else if(a==="dl"){st.dl=(+v===st.dl)?-1:+v;renderDq()}
+else if(a==="sn"){st.sn=v;st.rl=-1}
+else if(a==="rl"){st.rl=(+v===st.rl)?-1:+v}
+else if(a==="ty"){st.ty=+v;st.rl=-1}
+else if(a==="mg"){var on=b.getAttribute("aria-pressed")==="true";b.setAttribute("aria-pressed",String(!on));if(window.KIN3D)KIN3D.setGroup(v,!on);return}
+else if(a==="el"){st.el=(st.el===+v)?-1:+v;updateElSel();return}
+render();
+});
+document.addEventListener("keydown",function(e){
+if((e.key==="Enter"||e.key===" ")&&e.target&&e.target.closest&&e.target.closest(".fnode")){e.preventDefault();var g=e.target.closest(".fnode");st.el=(st.el===+g.getAttribute("data-v"))?-1:+g.getAttribute("data-v");updateElSel()}
+});
+document.addEventListener("input",function(e){
+if(e.target&&e.target.id==="dq"){st.dq=e.target.value;st.dl=-1;renderDq()}
+});
+render();
+})();
+</script>
+<script type="module">
+/* 3D-модель человека с меридианами для раздела «Кинезиология».
+   Фигура и пути меридианов строятся параметрически (Three.js, локальный vendor/). */
+window.KIN3D=(function(){
+var ctx=null,seq=0;
+var COL={metal:0x8fa3bf,earth:0xd99b2b,fire:0xd64541,water:0x3f7fbf,wood:0x3f9e4d,du:0x1d6f68};
+function arm(t,dx,dz){return [0.195+0.07*t+dx,1.415-0.48*t,0.005*t+dz]}
+function leg(t,dx,dz){return [0.088+0.015*t+dx,0.92-0.82*t,0.005*t+dz]}
+var MER={
+LU:["metal",[[0.075,1.40,0.128],[0.15,1.375,0.10],arm(0.15,-0.012,0.054),arm(0.45,-0.012,0.056),arm(0.75,-0.012,0.057),arm(0.97,-0.01,0.05),[0.292,0.885,0.028]]],
+LI:["metal",[[0.30,0.885,0.0],arm(0.97,0.02,-0.048),arm(0.7,0.02,-0.055),arm(0.4,0.02,-0.055),arm(0.12,0.015,-0.05),[0.17,1.44,-0.03],[0.10,1.53,0.0],[0.035,1.63,0.098]]],
+ST:["earth",[[0.04,1.665,0.106],[0.085,1.575,0.078],[0.055,1.52,0.05],[0.068,1.32,0.155],[0.062,1.06,0.16],leg(0.12,0.0,0.066),leg(0.45,0.0,0.068),leg(0.8,0.0,0.064),[0.112,0.055,0.075],[0.112,0.02,0.145]]],
+SP:["earth",[[0.052,0.03,0.15],[0.045,0.075,0.035],leg(0.94,-0.055,0.012),leg(0.6,-0.056,0.02),leg(0.28,-0.055,0.025),[0.10,1.02,0.132],[0.108,1.27,0.125]]],
+HT:["fire",[[0.155,1.415,0.05],arm(0.15,-0.05,0.012),arm(0.45,-0.05,0.014),arm(0.75,-0.05,0.015),arm(0.97,-0.045,0.01),[0.263,0.878,-0.012]]],
+SI:["fire",[[0.265,0.878,-0.02],arm(0.95,-0.012,-0.052),arm(0.65,-0.012,-0.054),arm(0.35,-0.012,-0.054),arm(0.1,-0.008,-0.05),[0.155,1.43,-0.10],[0.085,1.53,-0.02],[0.095,1.645,0.045]]],
+BL:["water",[[0.02,1.685,0.105],[0.055,1.745,0.05],[0.06,1.72,-0.078],[0.05,1.45,-0.135],[0.065,1.15,-0.15],[0.085,0.93,-0.105],leg(0.15,0.0,-0.065),leg(0.5,0.0,-0.066),leg(0.82,0.0,-0.062),[0.128,0.06,0.0],[0.138,0.025,0.13]]],
+KI:["water",[[0.10,0.012,0.10],[0.042,0.055,-0.005],leg(0.9,-0.056,-0.018),leg(0.55,-0.057,-0.02),leg(0.25,-0.055,-0.015),[0.045,1.02,0.168],[0.048,1.35,0.16]]],
+PC:["fire",[[0.115,1.33,0.125],arm(0.18,0.004,0.055),arm(0.5,0.004,0.057),arm(0.8,0.004,0.056),arm(0.98,0.004,0.045),[0.282,0.88,0.012]]],
+TB:["fire",[[0.288,0.882,-0.002],arm(0.95,0.005,-0.054),arm(0.6,0.005,-0.056),arm(0.3,0.005,-0.055),[0.20,1.455,-0.015],[0.10,1.53,0.0],[0.105,1.675,0.015],[0.07,1.70,0.075]]],
+GB:["wood",[[0.07,1.675,0.09],[0.11,1.70,0.01],[0.11,1.63,-0.045],[0.155,1.31,-0.005],[0.163,1.06,-0.015],[0.15,0.92,-0.015],leg(0.18,0.064,0.0),leg(0.5,0.065,0.005),leg(0.8,0.062,0.01),[0.128,0.05,0.05],[0.126,0.022,0.135]]],
+LV:["wood",[[0.068,0.055,0.15],[0.05,0.085,0.03],leg(0.9,-0.062,0.0),leg(0.55,-0.062,0.0),leg(0.28,-0.06,0.005),[0.062,0.945,0.10],[0.132,1.14,0.10]]],
+DU:["du",[[0,0.94,-0.15],[0,1.15,-0.163],[0,1.42,-0.125],[0,1.58,-0.09],[0,1.71,-0.075],[0,1.775,0.0],[0,1.72,0.10],[0,1.635,0.118]]],
+REN:["du",[[0,0.95,0.15],[0,1.12,0.172],[0,1.32,0.163],[0,1.46,0.115],[0,1.545,0.075],[0,1.578,0.082]]]
+};
+function fail(){var m=document.getElementById("kin3dmsg");if(m)m.textContent=m.dataset.fail}
+function dispose(){seq++;window.__KIN3D_READY__=false;if(!ctx)return;var c=ctx;ctx=null;
+c.io.disconnect();c.ro.disconnect();c.controls.dispose();
+c.scene.traverse(function(o){if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose()});
+c.renderer.dispose();if(c.renderer.forceContextLoss)c.renderer.forceContextLoss();
+if(c.canvas&&c.canvas.parentNode)c.canvas.parentNode.removeChild(c.canvas)}
+async function init(){
+var wrap=document.getElementById("kin3d");
+if(!wrap||ctx)return;
+var my=++seq;
+var THREE,OrbitControls;
+try{
+THREE=await import("three");
+OrbitControls=(await import("./vendor/OrbitControls.js")).OrbitControls;
+}catch(e){fail();return}
+if(my!==seq||!document.getElementById("kin3d"))return;
+var renderer;
+try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true})}catch(e){fail();return}
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+var W=wrap.clientWidth||600,H=wrap.clientHeight||460;
+renderer.setSize(W,H,false);
+wrap.appendChild(renderer.domElement);
+var scene=new THREE.Scene();
+var cam=new THREE.PerspectiveCamera(34,W/H,0.1,50);
+cam.position.set(1.78,1.35,3.0);
+var controls=new OrbitControls(cam,renderer.domElement);
+controls.target.set(0,0.92,0);
+controls.enableDamping=true;controls.enablePan=false;
+controls.minDistance=1.3;controls.maxDistance=5;
+var reduced=false;
+try{reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){}
+controls.autoRotate=!reduced;controls.autoRotateSpeed=1.0;
+controls.addEventListener("start",function(){controls.autoRotate=false});
+scene.add(new THREE.HemisphereLight(0xffffff,0x8a8378,1.05));
+var key=new THREE.DirectionalLight(0xffffff,1.6);key.position.set(2.5,3.2,2.0);scene.add(key);
+var fill=new THREE.DirectionalLight(0xdfe8ff,0.7);fill.position.set(-2,1.5,-2.5);scene.add(fill);
+var sh=new THREE.Mesh(new THREE.CircleGeometry(0.5,32),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.12,depthWrite:false}));
+sh.rotation.x=-Math.PI/2;sh.position.y=0.002;sh.scale.set(1,0.7,1);scene.add(sh);
+var bodyMat=new THREE.MeshStandardMaterial({color:0xd8cfc4,roughness:0.65,metalness:0.02,transparent:true,opacity:0.5,depthWrite:false});
+var body=new THREE.Group();
+function mesh(geo,x,y,z){var m=new THREE.Mesh(geo,bodyMat);m.position.set(x,y,z);body.add(m);return m}
+function cap(r,len){return new THREE.CapsuleGeometry(r,len,6,18)}
+mesh(new THREE.SphereGeometry(0.115,28,20),0,1.655,0);
+mesh(new THREE.CylinderGeometry(0.052,0.058,0.09,16),0,1.535,0);
+mesh(cap(0.155,0.26),0,1.175,0);
+mesh(cap(0.135,0.08),0,0.93,0);
+function limb(p1,p2,r){var d=new THREE.Vector3(p2[0]-p1[0],p2[1]-p1[1],p2[2]-p1[2]);var L=d.length();
+var m=new THREE.Mesh(new THREE.CapsuleGeometry(r,L,6,14),bodyMat);
+m.position.set((p1[0]+p2[0])/2,(p1[1]+p2[1])/2,(p1[2]+p2[2])/2);
+m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());body.add(m)}
+[-1,1].forEach(function(s){
+limb([s*0.195,1.415,0],[s*0.265,0.935,0.005],0.05);
+var h=mesh(new THREE.SphereGeometry(0.055,16,12),s*0.28,0.885,0.008);h.scale.set(0.75,1.15,0.55);
+limb([s*0.088,0.92,0],[s*0.103,0.10,0.005],0.062);
+var f=mesh(new THREE.SphereGeometry(0.06,16,12),s*0.105,0.035,0.07);f.scale.set(0.85,0.45,1.6);
+});
+scene.add(body);
+var groups={};
+Object.keys(COL).forEach(function(k){groups[k]=new THREE.Group();scene.add(groups[k])});
+Object.keys(MER).forEach(function(name){
+var gk=MER[name][0],pts=MER[name][1];
+[1,-1].forEach(function(sgn){
+if(sgn<0&&(name==="DU"||name==="REN"))return;
+var v=pts.map(function(p){return new THREE.Vector3(sgn*p[0],p[1],p[2])});
+var curve=new THREE.CatmullRomCurve3(v,false,"catmullrom",0.15);
+var geo=new THREE.TubeGeometry(curve,Math.max(32,v.length*8),0.0075,6,false);
+groups[gk].add(new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:COL[gk]})));
+});
+});
+var raf=0;
+function frame(){raf=requestAnimationFrame(frame);controls.update();renderer.render(scene,cam)}
+var io=new IntersectionObserver(function(es){es.forEach(function(en){
+if(en.isIntersecting){if(!raf)frame()}else{cancelAnimationFrame(raf);raf=0}})},{threshold:0.05});
+io.observe(wrap);
+var ro=new ResizeObserver(function(){var w=wrap.clientWidth,h=wrap.clientHeight;if(!w||!h)return;
+renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()});
+ro.observe(wrap);
+var poster=document.getElementById("kin3dposter");if(poster)poster.remove();
+ctx={renderer:renderer,controls:controls,io:io,ro:ro,scene:scene,canvas:renderer.domElement,groups:groups};
+renderer.render(scene,cam);
+window.__KIN3D_READY__=true;
+}
+function setGroup(k,on){if(ctx&&ctx.groups[k])ctx.groups[k].visible=on}
+if(document.getElementById("kin3d"))init();
+setTimeout(function(){if(!window.__KIN3D_READY__&&document.getElementById("kin3d"))fail()},12000);
+return {init:init,dispose:dispose,setGroup:setGroup};
+})();
+</script>
+</body>
+</html>
