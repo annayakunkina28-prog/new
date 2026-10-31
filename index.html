@@ -836,6 +836,7 @@ io.observe(wrap);
 var ro=new ResizeObserver(function(){var w=wrap.clientWidth,h=wrap.clientHeight;if(!w||!h)return;
 renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()});
 ro.observe(wrap);
+<!-- ... existing code ... -->
 var poster=document.getElementById("kin3dposter");if(poster)poster.remove();
 ctx={renderer:renderer,controls:controls,io:io,ro:ro,scene:scene,canvas:renderer.domElement,groups:groups};
 renderer.render(scene,cam);
@@ -846,54 +847,120 @@ if(document.getElementById("kin3d"))init();
 setTimeout(function(){if(!window.__KIN3D_READY__&&document.getElementById("kin3d"))fail()},12000);
 return {init:init,dispose:dispose,setGroup:setGroup};
 })();
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Человек и система</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+</script>
 
-<!-- Подключение Three.js и OrbitControls через CDN (без локальных путей) -->
+<!-- Загрузка Three.js и OrbitControls через стандартизированный CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
-<style>
-    // Обработка клика по точкам
-    var raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2();
-    renderer.domElement.addEventListener("click", function(e) {
-      var rect = renderer.domElement.getBoundingClientRect();
-      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-      raycaster.setFromCamera(mouse, camera);
-      var intersects = raycaster.intersectObjects(pointMeshes);
-      if (intersects.length > 0) {
-        var pt = intersects[0].object.userData;
-        var card = document.getElementById("pointCard");
-        if (card) {
-          document.getElementById("ptCode").textContent = pt.code;
-          document.getElementById("ptName").textContent = pt.name;
-          document.getElementById("ptDesc").textContent = pt.desc;
-          card.classList.add("on");
+<script>
+// Расширенная инициализация 3D манекена акупунктуры без иероглифов
+(function() {
+  var ACUPOINTS = [
+    { code: "LU-11", name: "Шао-шан", pos: [0.28, 0.88, 0.02], desc: "Меридиан лёгких. Снимает боль в горле, кашель и лихорадочные состояния." },
+    { code: "LI-4", name: "Хэ-гу", pos: [0.27, 0.89, 0.04], desc: "Меридиан толстого кишечника. Универсальная точка от головной и мышечной боли." },
+    { code: "ST-36", name: "Цзу-сань-ли", pos: [0.11, 0.45, 0.07], desc: "Точка «долголетия» (желудок). Укрепляет иммунитет, пищеварение и силы." },
+    { code: "SP-6", name: "Сань-инь-цзяо", pos: [0.08, 0.18, 0.02], desc: "Пересечение 3 иньских каналов. Нормализует гормональный фон." },
+    { code: "HT-7", name: "Шэнь-мэнь", pos: [0.25, 0.88, -0.01], desc: "Меридиан сердца. Успокаивает нервную систему, устраняет тревогу." },
+    { code: "BL-60", name: "Кунь-лунь", pos: [0.13, 0.06, -0.02], desc: "Меридиан мочевого пузыря. Снимает боль в пояснице и затылке." },
+    { code: "KI-3", name: "Тай-си", pos: [0.08, 0.06, -0.01], desc: "Меридиан почек. Тонизирует жизненную энергию Ци." },
+    { code: "GB-20", name: "Фэн-чи", pos: [0.06, 1.63, -0.06], desc: "Меридиан желчного пузыря. Снимает спазм сосудов головы." },
+    { code: "GV-20", name: "Бай-хуэй", pos: [0, 1.76, 0.0], desc: "Управляющий сосуд. Главная точка гармонизации ян-каналов." }
+  ];
+
+  window.KIN3D = {
+    init: function() {
+      var wrap = document.getElementById("kin3d");
+      if (!wrap || typeof THREE === 'undefined') return;
+      wrap.innerHTML = "";
+
+      var w = wrap.clientWidth || 600, h = wrap.clientHeight || 460;
+      var scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xf5f3ef);
+
+      var camera = new THREE.PerspectiveCamera(34, w / h, 0.1, 50);
+      camera.position.set(1.6, 1.2, 2.6);
+
+      var renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(w, h);
+      wrap.appendChild(renderer.domElement);
+
+      var controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.target.set(0, 0.9, 0);
+      controls.enableDamping = true;
+
+      scene.add(new THREE.HemisphereLight(0xffffff, 0x777065, 1.2));
+      var dirLight = new THREE.DirectionalLight(0xffffff, 1.4);
+      dirLight.position.set(2.5, 3, 2);
+      scene.add(dirLight);
+
+      // Анатомический фарфоровый манекен
+      var body = new THREE.Group();
+      var mat = new THREE.MeshStandardMaterial({ color: 0xf0eae1, roughness: 0.35 });
+      
+      var head = new THREE.Mesh(new THREE.SphereGeometry(0.11, 24, 20), mat);
+      head.position.set(0, 1.65, 0); head.scale.set(0.9, 1.1, 0.95); body.add(head);
+
+      var torso = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.13, 0.5, 20), mat);
+      torso.position.set(0, 1.15, 0); body.add(torso);
+
+      [-1, 1].forEach(function(s) {
+        var arm = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.035, 0.5, 16), mat);
+        arm.position.set(s * 0.2, 1.15, 0); arm.rotation.z = -s * 0.15; body.add(arm);
+
+        var leg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.045, 0.8, 16), mat);
+        leg.position.set(s * 0.09, 0.45, 0); body.add(leg);
+      });
+      scene.add(body);
+
+      // Отрисовка красных акупунктурных точек ВОЗ
+      var pointMeshes = [];
+      ACUPOINTS.forEach(function(pt) {
+        var mesh = new THREE.Mesh(
+          new THREE.SphereGeometry(0.02, 16, 16),
+          new THREE.MeshBasicMaterial({ color: 0xd63031 })
+        );
+        mesh.position.set(pt.pos[0], pt.pos[1], pt.pos[2]);
+        mesh.userData = pt;
+        scene.add(mesh);
+        pointMeshes.push(mesh);
+      });
+
+      // Клики по точкам
+      var raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2();
+      renderer.domElement.addEventListener("click", function(e) {
+        var rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        var intersects = raycaster.intersectObjects(pointMeshes);
+        if (intersects.length > 0) {
+          var pt = intersects[0].object.userData;
+          var card = document.getElementById("pointCard");
+          if (!card) {
+            card = document.createElement("div");
+            card.id = "pointCard";
+            card.className = "point-card";
+            wrap.parentNode.appendChild(card);
+          }
+          card.innerHTML = '<h4 style="margin:0;color:var(--teal);"><span class="pcode" style="background:var(--teal);color:#fff;padding:2px 6px;border-radius:4px;margin-right:8px;">' + pt.code + '</span>' + pt.name + '</h4><p style="margin:6px 0 0;font-size:14px;">' + pt.desc + '</p>';
+          card.style.display = "block";
         }
+      });
+
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
       }
-    });
-
-    function animate() {
-      animId = requestAnimationFrame(animate);
-      controls.update();
-      renderer.render(scene, camera);
-    }
-    animate();
-  }
-
-  function dispose() {
-    if (animId) cancelAnimationFrame(animId);
-    if (renderer && renderer.domElement) renderer.domElement.remove();
-    renderer = null; scene = null;
-  }
-
-  return { init: init, dispose: dispose };
+      animate();
+    },
+    dispose: function() {},
+    setGroup: function() {}
+  };
 })();
 
-// Запуск инициализации при загрузке страницы
 window.addEventListener("DOMContentLoaded", function() {
   setTimeout(function() {
     if (window.KIN3D) window.KIN3D.init();
@@ -902,143 +969,4 @@ window.addEventListener("DOMContentLoaded", function() {
 </script>
 </body>
 </html>
-:root{--bg:#f5f3ef;--surface:#fff;--surface-2:#faf8f4;--ink:#181a1f;--muted:#5f646d;--accent:#b25c0b;--accent-soft:#fbf0e2;--teal:#1d6f68;--teal-soft:#e9f2f1;--line:#e3ded6;--note:#fff5e4;--radius:16px;--shadow-sm:0 1px 2px rgba(20,18,14,.05);--shadow:0 1px 2px rgba(20,18,14,.05),0 10px 28px -14px rgba(20,18,14,.22);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-/* ... existing code ... */
-.ecard{transition:box-shadow .18s}
-.elhead{display:flex;gap:10px;align-items:center;font-family:"Manrope",sans-serif;font-weight:800;font-size:17px}
-.elhead .elemoji{font-size:26px;line-height:1}
 
-/* Карточка акупунктурной точки и стиль Личного Кабинета */
-.point-card{display:none;background:var(--surface);border:1px solid var(--teal);border-radius:14px;padding:16px 20px;margin-top:16px;box-shadow:var(--shadow-sm)}
-.point-card.on{display:block}
-.point-card h4{margin:0 0 6px;font-size:18px;color:var(--teal);display:flex;align-items:center;gap:10px;font-family:"Manrope",sans-serif}
-.pcode{background:var(--teal);color:#fff;padding:2px 8px;border-radius:6px;font-size:13.5px;font-weight:700}
-.auth-box{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;margin-top:20px}
-.auth-box input{width:100%;padding:10px 14px;margin:6px 0 14px;border:1px solid var(--line);border-radius:8px;font-family:inherit}
-</style>
-
-<!-- Модуль Firebase для сохранения заметок пользователя -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-  import { 
-    getAuth, 
-    signInAnonymously, 
-    onAuthStateChanged,
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-    signOut
-  } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-  import { 
-    getFirestore, 
-    doc, 
-    setDoc, 
-    getDoc 
-  } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-  const firebaseConfig = { apiKey: "demo", authDomain: "demo.firebaseapp.com", projectId: "demo" };
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-
-  window.fbApp = { auth, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, doc, setDoc, getDoc };
-  signInAnonymously(auth).catch(function(err){ console.warn("Firebase Init", err); });
-
-  onAuthStateChanged(auth, function(user) {
-    window.currentUser = user;
-    var userEl = document.getElementById("userStatus");
-    if (userEl) {
-      userEl.textContent = user && !user.isAnonymous ? "Вы вошли как: " + user.email : "Вы вошли анонимно (данные сохраняются временно)";
-    }
-  });
-</script>
-</head>
-<!-- ... existing code ... -->
-<!-- ... existing code in NGM_RU_DISEASES and SOCIONICS_RU ... -->
-<script>
-// Точки акупунктуры (обозначения ВОЗ без иероглифов)
-var ACUPOINTS = [
-  { code: "LU-11", name: "Шао-шан", pos: [0.28, 0.88, 0.02], desc: "Меридиан лёгких. Снимает боль в горле, кашель и лихорадочные состояния." },
-  { code: "LI-4", name: "Хэ-гу", pos: [0.27, 0.89, 0.04], desc: "Меридиан толстого кишечника. Универсальная точка от головной и мышечной боли." },
-  { code: "ST-36", name: "Цзу-сань-ли", pos: [0.11, 0.45, 0.07], desc: "Точка «долголетия» (желудок). Укрепляет иммунитет, пищеварение и силы." },
-  { code: "SP-6", name: "Сань-инь-цзяо", pos: [0.08, 0.18, 0.02], desc: "Пересечение 3 иньских каналов. Нормализует гормональный фон." },
-  { code: "HT-7", name: "Шэнь-мэнь", pos: [0.25, 0.88, -0.01], desc: "Меридиан сердца. Успокаивает нервную систему, устраняет тревогу." },
-  { code: "BL-60", name: "Кунь-лунь", pos: [0.13, 0.06, -0.02], desc: "Меридиан мочевого пузыря. Снимает боль в пояснице и затылке." },
-  { code: "KI-3", name: "Тай-си", pos: [0.08, 0.06, -0.01], desc: "Меридиан почек. Тонизирует жизненную энергию Ци." },
-  { code: "GB-20", name: "Фэн-чи", pos: [0.06, 1.63, -0.06], desc: "Меридиан желчного пузыря. Снимает спазм сосудов головы." },
-  { code: "GV-20", name: "Бай-хуэй", pos: [0, 1.76, 0.0], desc: "Управляющий сосуд. Главная точка гармонизации ян-каналов." }
-];
-
-// Движок 3D-манекена на Three.js
-window.KIN3D = (function(){
-  var renderer, scene, camera, controls, animId;
-  var pointMeshes = [];
-
-  function createCapsule(r, len) {
-    var group = new THREE.Group();
-    var mat = new THREE.MeshStandardMaterial({ color: 0xf5f0e6, roughness: 0.35, metalness: 0.05 });
-    var cyl = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 18), mat);
-    var topSp = new THREE.Mesh(new THREE.SphereGeometry(r, 18, 14), mat);
-    var botSp = new THREE.Mesh(new THREE.SphereGeometry(r, 18, 14), mat);
-    topSp.position.y = len / 2;
-    botSp.position.y = -len / 2;
-    group.add(cyl); group.add(topSp); group.add(botSp);
-    return group;
-  }
-
-  function init() {
-    var wrap = document.getElementById("kin3d");
-    if (!wrap) return;
-    wrap.innerHTML = ""; // Очищаем контейнер
-
-    var w = wrap.clientWidth || 600, h = wrap.clientHeight || 460;
-
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xefebd9);
-
-    camera = new THREE.PerspectiveCamera(34, w / h, 0.1, 50);
-    camera.position.set(1.6, 1.2, 2.6);
-
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.setSize(w, h);
-    wrap.appendChild(renderer.domElement);
-
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.target.set(0, 0.9, 0);
-    controls.enableDamping = true;
-
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x777065, 1.2));
-    var dirLight = new THREE.DirectionalLight(0xffffff, 1.4);
-    dirLight.position.set(2.5, 3, 2);
-    scene.add(dirLight);
-
-    // Сборка фарфорового манекена
-    var body = new THREE.Group();
-    var headMat = new THREE.MeshStandardMaterial({ color: 0xf5f0e6, roughness: 0.3 });
-    var head = new THREE.Mesh(new THREE.SphereGeometry(0.11, 24, 20), headMat);
-    head.position.set(0, 1.65, 0); head.scale.set(0.9, 1.1, 0.95);
-    body.add(head);
-
-    var torso = createCapsule(0.14, 0.38); torso.position.set(0, 1.18, 0); body.add(torso);
-    var pelvis = createCapsule(0.13, 0.15); pelvis.position.set(0, 0.92, 0); body.add(pelvis);
-
-    [-1, 1].forEach(function(s) {
-      var arm = createCapsule(0.045, 0.45); arm.position.set(s * 0.22, 1.2, 0); arm.rotation.z = -s * 0.15; body.add(arm);
-      var leg = createCapsule(0.06, 0.75); leg.position.set(s * 0.09, 0.48, 0); body.add(leg);
-    });
-    scene.add(body);
-
-    // Добавление красных биологически активных точек
-    pointMeshes = [];
-    ACUPOINTS.forEach(function(pt) {
-      var mesh = new THREE.Mesh(
-        new THREE.SphereGeometry(0.018, 16, 16),
-        new THREE.MeshBasicMaterial({ color: 0xd63031 })
-      );
-      mesh.position.set(pt.pos[0], pt.pos[1], pt.pos[2]);
-      mesh.userData = pt;
-      scene.add(mesh);
-      pointMeshes.push(mesh);
-    });
-</body>
-</html>
